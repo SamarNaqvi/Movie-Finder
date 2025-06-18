@@ -1,75 +1,114 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import {
+  StyleSheet,
+  Text,
+  View,
+  Image,
+  ScrollView,
+  FlatList,
+  ActivityIndicator,
+  TouchableOpacity,
+} from "react-native";
+import React from "react";
+import { images } from "@/constants/images";
+import { icons } from "@/constants/icons";
+import SearchBar from "../components/SearchBar";
+import { useRouter } from "expo-router";
+import { useFetch } from "../hooks/useFetch";
+import { fetchMovies } from "../services/api";
+import MovieCard from "../components/MovieCard";
+import { getTrendingMovies } from "../services/appWrite";
+import TrendingCard from "../components/TrendingCard";
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+const Home = () => {
+  const router = useRouter();
+  const {
+    data: movies,
+    loading,
+    error,
+  } = useFetch(() => fetchMovies({ query: "" }), true);
 
-export default function HomeScreen() {
+  const {
+    data: trendingMovies,
+    loading: trendingMoviesLoading,
+    error: trendingMoviesError,
+  } = useFetch(() => getTrendingMovies(), true);
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+    <View className="flex-1 bg-primary">
+      <Image source={images.bg} className="absolute z-0 w-full" />
+      <ScrollView
+        className="flex-1 px-5"
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{
+          paddingBottom: 10,
+          minHeight: 100,
+        }}
+      >
+        <Image source={icons.logo} className="mx-auto h-12 w-12 mt-20 mb-5" />
+        {loading || trendingMoviesLoading ? (
+          <ActivityIndicator
+            size={"large"}
+            color={"#0000ff"}
+            className="mt-20 self-center"
+          />
+        ) : error || trendingMoviesError ? (
+          <Text className="text-red-700">
+            {error?.message ? error?.message : trendingMoviesError?.message}
+          </Text>
+        ) : (
+          <>
+            <TouchableOpacity
+              onPress={() => router.push("/Search")}
+              className="border border-solid border-purple-500 bg-dark-200 px-4 py-[1.14rem] rounded-full flex flex-row gap-6 items-center"
+            >
+              <Image
+                source={icons.search}
+                tintColor={"#AB8BFF"}
+                resizeMode="contain"
+              />
+              <Text className="text-purple-300" style={{ color: "#AB8BFF" }}>
+                Enter Movie Name to Search
+              </Text>
+            </TouchableOpacity>
+           
+            {trendingMovies && (
+              <View className="mt-10">
+                <Text className="text-lg text-white font-bold mb-3">
+                  Trending Movies
+                </Text>
+                <FlatList
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  className="mb-4 mt-3"
+                  data={trendingMovies}
+                  contentContainerStyle={{
+                    gap: 26,
+                  }}
+                  renderItem={({ item, index }) => (
+                    <TrendingCard movie={item} index={index} />
+                  )}
+                  //@ts-ignore
+                  keyExtractor={(item) => item.$id.toString()}
+                  ItemSeparatorComponent={() => <View className="w-4" />}
+                />
+              </View>
+            )}
+            <Text className="text-white my-2 text-lg">Latest Movies</Text>
+            <FlatList
+              data={movies}
+              scrollEnabled={false}
+              renderItem={({ item }) => <MovieCard {...item} />}
+              numColumns={3}
+              columnWrapperClassName="gap-5"
+              keyExtractor={(item) => item?.id.toString()}
+            />
+          </>
+        )}
+      </ScrollView>
+    </View>
   );
-}
+};
 
-const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
-});
+export default Home;
+
+const styles = StyleSheet.create({});
