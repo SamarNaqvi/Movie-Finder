@@ -7,19 +7,26 @@ import {
   Text,
   View,
 } from "react-native";
-import React from "react";
+import React, { useEffect } from "react";
 import { useFetch } from "../hooks/useFetch";
 import { getSavedMovies } from "../services/appWrite";
 import { icons } from "@/constants/icons";
 import MovieCard from "../components/MovieCard";
 import { images } from "@/constants/images";
+import { useIsFocused } from "@react-navigation/native";
 
 const Save = () => {
   const {
     data: savedMovies,
     loading,
     error,
+    refetch,
   } = useFetch(() => getSavedMovies());
+const isFocused = useIsFocused();
+
+useEffect(()=>{
+  isFocused && refetch();
+},[isFocused]);
 
   return (
     <View className="flex-1 bg-primary">
